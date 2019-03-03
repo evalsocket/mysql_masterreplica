@@ -1,10 +1,16 @@
 steps:
 - id: 'Build Mysql Master Image'
   name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'us.gcr.io/$PROJECT_ID/$REPO_NAME master/$BRANCH_NAME:$SHORT_SHA', '.']
+  args: ['build', '-t', 'us.gcr.io/$PROJECT_ID/$REPO_NAME/$BRANCH_NAME:$SHORT_SHA', '.']
+- id: 'Push Mysql Master Image'
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'us.gcr.io/$PROJECT_ID/$REPO_NAME/$BRANCH_NAME:$SHORT_SHA']
+- id: 'Build Mysql Replica Image'
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'us.gcr.io/$PROJECT_ID/$REPO_NAME/$BRANCH_NAME:$SHORT_SHA', 'Dockerfile.replica']
 - id: 'Push Mysql Replica Image'
   name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'us.gcr.io/$PROJECT_ID/$REPO_NAME replica/$BRANCH_NAME:$SHORT_SHA']
+  args: ['push', 'us.gcr.io/$PROJECT_ID/$REPO_NAME/$BRANCH_NAME:$SHORT_SHA']
 - id: 'Set Master Image in yamls'
   name: 'ubuntu'
   args: ['bash','-c','sed -i "s,MASTER_IMAGE,us.gcr.io/$PROJECT_ID/$REPO_NAME master/$BRANCH_NAME:$SHORT_SHA," k8s/mysql-master-rc.yml']
