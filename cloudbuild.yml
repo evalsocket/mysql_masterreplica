@@ -1,0 +1,19 @@
+steps:
+- id: 'Build Mysql Master Image'
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'us.gcr.io/$PROJECT_ID/$REPO_NAME_master/$BRANCH_NAME:$SHORT_SHA', '.']
+- id: 'Push Mysql Replica Image'
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'us.gcr.io/$PROJECT_ID/$REPO_NAME_replica/$BRANCH_NAME:$SHORT_SHA']
+- id: 'Set Master Image in yamls'
+  name: 'ubuntu'
+  args: ['bash','-c','sed -i "s,MASTER_IMAGE,us.gcr.io/$PROJECT_ID/$REPO_NAME_master/$BRANCH_NAME:$SHORT_SHA," k8s/mysql-master-rc.yml']
+- id: 'Set Replica Image in yamls'
+  name: 'ubuntu'
+  args: ['bash','-c','sed -i "s,SLAVE_IMAGE,us.gcr.io/$PROJECT_ID/$REPO_NAME_replica/$BRANCH_NAME:$SHORT_SHA," k8s/mysql-replica-rc.yml']
+- id: kubectl-apply
+  name: 'gcr.io/cloud-builders/kubectl'
+  args: ['apply', '-f', 'k8s/']
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=${_CLOUDSDK_COMPUTE_ZONE}'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLOUDSDK_CONTAINER_CLUSTER}'
